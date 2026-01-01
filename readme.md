@@ -5,12 +5,11 @@ Production-ready REST API built with Express.js and Sequelize ORM.
 ## Features
 
 - **Authentication & Authorization**: JWT-based auth with refresh token rotation
-- **Database**: Sequelize ORM with PostgreSQL
-- **Security**: Helmet, CORS, rate limiting, input validation
+- **Database**: Sequelize ORM with SQLite by default (configurable via env)
+- **Security**: Helmet, CORS, rate limiting
 - **File Upload**: Multer with file type and size validation
 - **Error Handling**: Centralized error handling with consistent API responses
-- **Testing**: Jest + Supertest
-- **Code Quality**: ESLint + Prettier
+- **Seeding**: Database seed script
 
 ## Prerequisites
 
@@ -35,19 +34,27 @@ Production-ready REST API built with Express.js and Sequelize ORM.
 | ---------------------- | -------------------------------------- | --------------------- |
 | NODE_ENV               | Environment (development/production)   | development           |
 | PORT                   | Server port                            | 3000                  |
-| DB_HOST                | Database host                          | localhost             |
-| DB_PORT                | Database port                          | 5432                  |
+| DB_DIALECT             | Sequelize dialect                      | sqlite                |
+| DB_STORAGE             | SQLite storage path                    | ./database.sqlite     |
 | JWT_ACCESS_SECRET      | JWT access token secret                | -                     |
 | JWT_REFRESH_SECRET     | JWT refresh token secret               | -                     |
 | JWT_ACCESS_EXPIRES_IN  | Access token expiry                    | 15m                   |
 | JWT_REFRESH_EXPIRES_IN | Refresh token expiry                   | 7d                    |
 | COOKIE_SECURE          | Use secure cookies (https)             | false                 |
-| CORS_ORIGIN            | Allowed CORS origins (comma-separated) | http://localhost:3000 |
+| COOKIE_SAME_SITE       | Cookie same-site policy                | -                     |
+| CORS_ORIGIN            | Allowed CORS origin                    | http://localhost:3000 |
+| RATE_LIMIT_WINDOW_MS   | Global rate limit window (ms)          | 900000                |
+| RATE_LIMIT_MAX_REQUESTS| Global rate limit max requests         | 100                   |
+| AUTH_RATE_LIMIT_WINDOW_MS | Auth rate limit window (ms)         | 900000                |
+| AUTH_RATE_LIMIT_MAX_REQUESTS | Auth rate limit max requests     | 10                    |
+| MAX_FILE_SIZE          | Max upload size (bytes)                | 5242880               |
+| ALLOWED_FILE_TYPES     | Allowed MIME types (comma-separated)   | image/jpeg,image/png,image/gif,application/pdf |
 
 ## Scripts
 
 - `npm run dev` - Start development server with auto-reload
 - `npm start` - Start production server
+- `npm run seed` - Seed the database
 
 ## API Documentation
 
@@ -182,7 +189,6 @@ src/
 - Rate limiting (global + stricter on auth routes)
 - Helmet security headers
 - CORS with origin whitelist
-- Input validation
 - File upload restrictions
 
 ## License
