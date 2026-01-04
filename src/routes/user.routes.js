@@ -1,22 +1,27 @@
 import express from "express";
-import * as userController from "../controllers/user.controller.js";
+import {
+  createUser,
+  deleteUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+} from "../controllers/user.controller.js";
 import { authenticate, authorize } from "../middlewares/auth.middleware.js";
+import {
+  validateCreateUser,
+  validateUpdateUser,
+  validateUserIdParam,
+} from "../validators/userValidator.js";
 
 export const router = express.Router();
 // CREATE 
-router.post("/", authenticate, authorize("admin"), userController.createUser);
+router.post("/",authenticate,authorize("admin"),validateCreateUser,createUser);
 // READ ALL
-router.get("/", authenticate, userController.getAllUsers);
+router.get("/", authenticate, getAllUsers);
 // READ ONE
-router.get("/:id", authenticate, userController.getUserById);
+router.get("/:id", authenticate, validateUserIdParam, getUserById);
 // UPDATE
-router.put("/:id", authenticate, userController.updateUser);
+router.put("/:id", authenticate, validateUserIdParam, validateUpdateUser,updateUser);
 // DELETE
-router.delete(
-  "/:id",
-  authenticate,
-  authorize("admin"),
-  userController.deleteUser
-);
-
+router.delete("/:id",authenticate,authorize("admin"),validateUserIdParam,deleteUser);
 

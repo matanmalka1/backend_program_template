@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import app from "./app.js";
+import { app } from "./app.js";
 import { testConnection } from "./config/db.js";
 
 const envFile =
@@ -9,9 +9,8 @@ const envFile =
     ? `.env.${process.env.NODE_ENV}`
     : ".env";
 
-const cwd = process.cwd();
-const preferredDevEnv = path.join(cwd, ".env.development");
-const envPath = path.join(cwd, envFile);
+const preferredDevEnv = path.join(process.cwd(), ".env.development");
+const envPath = path.join(process.cwd(), envFile);
 
 if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
   dotenv.config({ path: preferredDevEnv });
@@ -25,7 +24,9 @@ const startServer = async () => {
   await testConnection();
 
   const port = +process.env.PORT || 3000;
-  app.listen(port, () => {console.log(`Listening on ${port}`)});
+  app.listen(port, () => {
+    console.log(`server is live , Listening on port: ${port}`);
+  });
 };
 
 startServer().catch(() => {

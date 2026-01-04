@@ -175,7 +175,6 @@ src/
 ├── routes/          # Route definitions
 ├── services/        # Business logic
 ├── utils/           # Utility functions
-├── validators/      # Input validation schemas
 ├── app.js           # Express app setup
 └── server.js        # Entry point
 ```

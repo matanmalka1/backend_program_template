@@ -6,7 +6,8 @@ import { globalRateLimiter } from "./middlewares/rateLimiter.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import { notFound } from "./middlewares/notFound.js";
 import { router } from "./routes/index.js";
-const app = express();
+
+export const app = express();
 
 app.use(helmet());
 
@@ -27,5 +28,3 @@ app.use(`/api/v1`, router);
 
 app.use(notFound);
 app.use(errorHandler);
-
-export default app;
