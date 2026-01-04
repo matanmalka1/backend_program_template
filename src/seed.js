@@ -22,6 +22,7 @@ if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
   dotenv.config();
 }
 
+// Seed database with roles, permissions, and default users.
 const seed = async () => {
   await connectDB();
 

@@ -3,6 +3,7 @@ import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
 import { hashPassword } from "../utils/password.js";
 
 // CREATE
+// Create a new user with role validation.
 export const createUser = async (userData) => {
   const existingUser = await User.findOne({ email: userData.email });
 
@@ -36,6 +37,7 @@ export const createUser = async (userData) => {
 };
 
 // READ ALL (with pagination)
+// Fetch paginated users with role names.
 export const getAllUsers = async (query) => {
   const page = Math.max(1, parseInt(query.page) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 10));
@@ -61,6 +63,7 @@ export const getAllUsers = async (query) => {
 };
 
 // READ ONE
+// Fetch a single user by id with role and permissions.
 export const getUserById = async (id) => {
   const user = await User.findById(id)
     .populate({
@@ -81,6 +84,7 @@ export const getUserById = async (id) => {
 };
 
 // UPDATE
+// Update user fields with email and role checks.
 export const updateUser = async (id, userData) => {
   const user = await User.findById(id);
 
@@ -123,6 +127,7 @@ export const updateUser = async (id, userData) => {
 };
 
 // DELETE
+// Delete a user by id.
 export const deleteUser = async (id) => {
   const user = await User.findById(id);
 

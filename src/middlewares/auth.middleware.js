@@ -2,6 +2,7 @@ import { verifyAccessToken } from "../utils/jwt.js";
 import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
 import { User } from "../models/index.js";
 
+// Authenticate request by validating JWT and loading user with role/permissions.
 export const authenticate = async (req, _res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -39,6 +40,8 @@ export const authenticate = async (req, _res, next) => {
   }
 };
 
+
+// Check authenticated user's role against allowed roles.
 export const authorize = (...roles) => {
   return async (req, _res, next) => {
     try {
@@ -67,6 +70,8 @@ export const authorize = (...roles) => {
   };
 };
 
+
+// Check authenticated user's permissions for a resource/action pair.
 export const checkPermission = (resource, action) => {
   return async (req, _res, next) => {
     try {

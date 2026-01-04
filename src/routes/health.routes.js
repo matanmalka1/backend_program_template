@@ -4,6 +4,7 @@ import { successResponse } from "../utils/response.js";
 
 export const router = express.Router();
 
+// Health check endpoint with DB connectivity status.
 router.get("/health", async (_req, res, next) => {
   try {
     // Check MongoDB connection

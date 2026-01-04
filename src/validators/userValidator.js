@@ -6,6 +6,7 @@ import {
   isValidPassword,
 } from "./validatorUtils.js";
 
+// Validate user id route param.
 export const validateUserIdParam = (req, _res, next) => {
   const { id } = req.params;
 
@@ -18,6 +19,7 @@ export const validateUserIdParam = (req, _res, next) => {
   return next();
 };
 
+// Validate payload for user creation.
 export const validateCreateUser = (req, _res, next) => {
   // NOTE: Validation handled by the Mongoose model.
   const { email, password, firstName, lastName, roleId } = req.body ?? {};
@@ -60,6 +62,7 @@ export const validateCreateUser = (req, _res, next) => {
   return next();
 };
 
+// Validate payload for user updates.
 export const validateUpdateUser = (req, _res, next) => {
   // NOTE: Validation handled by the Mongoose model.
   const { email, firstName, lastName, isActive, roleId } = req.body ?? {};

@@ -21,6 +21,7 @@ if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
   dotenv.config();
 }
 
+// Initialize database connection and start HTTP server.
 const startServer = async () => {
   try {
     await connectDB();
@@ -41,12 +42,13 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-// Handle unhandled rejections
+// Handle unhandled promise rejections.
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled Rejection', { reason, promise });
   process.exit(1);
 });
 
+// Log startup failures not caught inside startServer.
 startServer().catch((error) => {
   logger.error("Failed to start server", { error: error.message });
   process.exit(1);

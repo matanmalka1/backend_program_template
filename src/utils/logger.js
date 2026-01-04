@@ -23,6 +23,7 @@ const fileFormat = winston.format.combine(
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+  // Format console log lines with timestamp and metadata.
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
     const extra = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : "";
     return `${timestamp} [${level}]: ${message}${extra}`;
@@ -50,7 +51,6 @@ export const logger = winston.createLogger({
   ],
 });
 
-// Add console transport in development
 if (process.env.NODE_ENV !== "production") {
   logger.add(
     new winston.transports.Console({
@@ -59,7 +59,8 @@ if (process.env.NODE_ENV !== "production") {
   );
 }
 
-// Create a stream object for Morgan
+
 export const stream = {
+  // Forward Morgan messages into winston.
   write: (message) => logger.info(message.trim())
 };

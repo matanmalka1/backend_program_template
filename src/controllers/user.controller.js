@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { successResponse } from "../utils/response.js";
 
 // CREATE
+// Handle user creation request.
 export const createUser = asyncHandler(async (req, res) => {
   const user = await userService.createUser(req.body);
 
@@ -10,6 +11,7 @@ export const createUser = asyncHandler(async (req, res) => {
 });
 
 // READ ALL
+// Handle paginated user list request.
 export const getAllUsers = asyncHandler(async (req, res) => {
   const result = await userService.getAllUsers(req.query);
 
@@ -17,6 +19,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 // READ ONE
+// Handle single user fetch by id.
 export const getUserById = asyncHandler(async (req, res) => {
   const user = await userService.getUserById(req.params.id);
 
@@ -24,6 +27,7 @@ export const getUserById = asyncHandler(async (req, res) => {
 });
 
 // UPDATE
+// Handle user update request.
 export const updateUser = asyncHandler(async (req, res) => {
   const user = await userService.updateUser(req.params.id, req.body);
 
@@ -31,6 +35,7 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 // DELETE
+// Handle user deletion request.
 export const deleteUser = asyncHandler(async (req, res) => {
   await userService.deleteUser(req.params.id);
 

@@ -2,6 +2,7 @@ import { ApiError, API_ERROR_CODES } from '../constants/api-error-codes.js';
 import { errorResponse } from '../utils/response.js';
 import { logger } from '../utils/logger.js';
 
+// Normalize errors and send a consistent JSON response.
 export const errorHandler = (err, req, res, _next) => {
   let error = err;
 

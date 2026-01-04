@@ -12,10 +12,13 @@ if (!existsSync(uploadDir)) {
   mkdirSync(uploadDir, { recursive: true });
 }
 
+// Configure disk storage for uploaded files.
 const storage = multer.diskStorage({
+  // Resolve upload destination folder.
   destination: (_req, _file, cb) => {
     cb(null, uploadDir);
   },
+  // Generate a unique filename for the uploaded file.
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     const ext = file.originalname.split(".").pop();
@@ -23,6 +26,7 @@ const storage = multer.diskStorage({
   },
 });
 
+// Reject uploads that are not in the allowed MIME types list.
 const fileFilter = (_req, file, cb) => {
   const allowedTypes = process.env.ALLOWED_FILE_TYPES
     ? process.env.ALLOWED_FILE_TYPES.split(",").map((value) => value.trim())
@@ -43,6 +47,7 @@ const fileFilter = (_req, file, cb) => {
   );
 };
 
+// Multer middleware with storage, filters, and size limits.
 export const upload = multer({
   storage,
   fileFilter,
@@ -51,6 +56,7 @@ export const upload = multer({
   },
 });
 
+// Translate multer errors into ApiError responses.
 export const handleMulterError = (err, _req, _res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {

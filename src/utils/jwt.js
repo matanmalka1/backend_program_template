@@ -2,18 +2,21 @@ import jwt from 'jsonwebtoken';
 
 import { ApiError, API_ERROR_CODES } from '../constants/api-error-codes.js';
 
+// Sign a short-lived access token.
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
     expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
   });
 };
 
+// Sign a long-lived refresh token.
 export const generateRefreshToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   });
 };
 
+// Verify access token and translate errors into ApiError.
 export const verifyAccessToken = (token) => {
   try {
     return jwt.verify(token,  process.env.JWT_ACCESS_SECRET);
@@ -25,6 +28,7 @@ export const verifyAccessToken = (token) => {
   }
 };
 
+// Verify refresh token and translate errors into ApiError.
 export const verifyRefreshToken = (token) => {
   try {
     return jwt.verify(token, process.env.JWT_REFRESH_SECRET);

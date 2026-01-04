@@ -5,6 +5,7 @@ import {
   isValidPassword,
 } from "./validatorUtils.js";
 
+// Validate payload for user registration.
 export const validateRegister = (req, _res, next) => {
   const { email, password, firstName, lastName } = req.body ?? {};
   const errors = [];
@@ -37,6 +38,7 @@ export const validateRegister = (req, _res, next) => {
   return errors.length ? next(buildValidationError(errors)) : next();
 };
 
+// Validate payload for login.
 export const validateLogin = (req, _res, next) => {
   // NOTE: Validation handled by the Mongoose model.
   const { email, password } = req.body ?? {};

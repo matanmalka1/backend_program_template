@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt.js";
 
+// Create a new user account with the default role.
 export const register = async (userData) => {
   const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
@@ -50,6 +51,7 @@ export const register = async (userData) => {
   return { user: userObject };
 };
 
+// Authenticate a user and issue access/refresh tokens.
 export const login = async (email, password) => {
   const user = await User.findOne({ email })
     .select("+password")
@@ -103,6 +105,7 @@ export const login = async (email, password) => {
   return { user: userObject, accessToken, refreshToken };
 };
 
+// Revoke a refresh token to log out a user.
 export const logout = async (userId, refreshToken) => {
   if (refreshToken) {
     await RefreshToken.updateOne(
@@ -113,6 +116,7 @@ export const logout = async (userId, refreshToken) => {
   }
 };
 
+// Validate refresh token and rotate tokens.
 export const refreshAccessToken = async (oldRefreshToken) => {
   const decoded = verifyRefreshToken(oldRefreshToken);
 
