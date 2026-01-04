@@ -6,9 +6,9 @@ import { connectDB } from "./config/db.js";
 import { logger } from "./utils/logger.js";
 
 const envFile =
-  process.env.NODE_ENV && process.env.NODE_ENV !== "production"
-    ? `.env.${process.env.NODE_ENV}`
-    : ".env";
+  process.env.NODE_ENV === "production"
+    ? ".env"
+    : `.env.${process.env.NODE_ENV || "development"}`;
 
 const preferredDevEnv = path.join(process.cwd(), ".env.development");
 const envPath = path.join(process.cwd(), envFile);
@@ -27,7 +27,7 @@ const startServer = async () => {
 
     const port = +process.env.PORT || 3000;
     app.listen(port, () => {
-      logger.info(`Server is live" ,Listening on port: ${port}`);
+      logger.info(`Server is live, listening on port: ${port}`);
     });
   } catch (error) {
     logger.error('Failed to start server', { error: error.message });
