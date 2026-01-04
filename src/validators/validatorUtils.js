@@ -10,8 +10,9 @@ export const isValidEmail = (value) =>
   typeof value === "string" && /^\S+@\S+\.\S+$/.test(value.trim());
 
 export const isValidPassword = (value) => {
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-  return typeof value === "string" && passwordRegex.test(value.trim());
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return typeof value === "string" && passwordRegex.test(value);
 };
 
 export const isPositiveInteger = (value) =>
