@@ -45,7 +45,7 @@ export const validateCreateUser = (req, _res, next) => {
     errors.push({
       field: "password",
       message:
-        "Password must be at least 8 characters and include upper, lower, number, and special character",
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)",
     });
   }
   

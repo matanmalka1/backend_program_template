@@ -30,12 +30,11 @@ export const validateRegister = (req, _res, next) => {
     errors.push({
       field: "password",
       message:
-        "Password must be at least 8 characters and include upper, lower, and number",
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)",
     });
   }
   
   return errors.length ? next(buildValidationError(errors)) : next();
-  return next();
 };
 
 export const validateLogin = (req, _res, next) => {
@@ -47,8 +46,11 @@ export const validateLogin = (req, _res, next) => {
     errors.push({ field: "email", message: "Email must be a valid address" });
   
   if (!isValidPassword(password))
-    errors.push({ field: "password", message: "Password must be at least 8 characters and include upper, lower, and number" });
+    errors.push({
+      field: "password",
+      message:
+        "Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)",
+    });
   
   return errors.length > 0 ? next(buildValidationError(errors)) : next();
-  return next();
 };
