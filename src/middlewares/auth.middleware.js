@@ -1,6 +1,6 @@
 import { verifyAccessToken } from "../utils/jwt.js";
 import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
-import { User, Role, Permission } from "../models/associations.js";
+import { User } from "../models/index.js";
 
 export const authenticate = async (req, _res, next) => {
   try {
@@ -13,17 +13,16 @@ export const authenticate = async (req, _res, next) => {
         401
       );
     }
-    const decoded = verifyAccessToken(authHeader.substring(7));
 
-    const user = await User.findByPk(decoded.userId, {
-      include: [
-        {
-          model: Role,
-          as: "role",
-          include: [{ model: Permission, as: "permissions" }],
-        },
-      ],
-    });
+    const token = authHeader.substring(7);
+    const decoded = verifyAccessToken(token);
+
+    const user = await User.findById(decoded.userId)
+      .populate({
+        path: "role",
+        populate: { path: "permissions" },
+      })
+      .lean();
 
     if (!user || !user.isActive) {
       throw new ApiError(

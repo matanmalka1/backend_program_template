@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { app } from "./app.js";
-import { testConnection } from "./config/db.js";
+import { connectDB } from "./config/db.js";
 
 const envFile =
   process.env.NODE_ENV && process.env.NODE_ENV !== "production"
@@ -21,11 +21,11 @@ if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
 }
 
 const startServer = async () => {
-  await testConnection();
+  await connectDB();
 
   const port = +process.env.PORT || 3000;
   app.listen(port, () => {
-    console.log(`server is live , Listening on port: ${port}`);
+    console.log(`Server is live, Listening on port: ${port}`);
   });
 };
 

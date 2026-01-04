@@ -1,25 +1,23 @@
+import mongoose from "mongoose";
 import {
   buildValidationError,
   isValidName,
   isNonEmptyString,
-  isValidRoleId,
   isValidEmail,
   isValidPassword,
 } from "./validatorUtils.js";
 
 export const validateUserIdParam = (req, _res, next) => {
-  const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id <= 0) {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
     return next(
-      buildValidationError([
-        { field: "id", message: "User id must be a positive integer" },
-      ])
+      buildValidationError([{ field: "id", message: "Invalid user ID format" }])
     );
   }
 
   return next();
 };
-
 
 export const validateCreateUser = (req, _res, next) => {
   const { email, password, firstName, lastName, roleId } = req.body ?? {};
@@ -47,12 +45,12 @@ export const validateCreateUser = (req, _res, next) => {
     errors.push({
       field: "password",
       message:
-        "Password must be at least 8 characters and include upper, lower, and number",
+        "Password must be at least 8 characters and include upper, lower, number, and special character",
     });
   }
 
-  if (!isValidRoleId(roleId)) {
-    errors.push({ field: "roleId", message: "roleId must be a positive integer" });
+  if (!roleId || !mongoose.Types.ObjectId.isValid(roleId)) {
+    errors.push({ field: "roleId", message: "Valid roleId is required" });
   }
 
   if (errors.length) {
@@ -96,10 +94,10 @@ export const validateUpdateUser = (req, _res, next) => {
     errors.push({ field: "isActive", message: "isActive must be a boolean" });
   }
 
-  if (roleId !== undefined && !isValidRoleId(roleId)) {
+  if (roleId !== undefined && !mongoose.Types.ObjectId.isValid(roleId)) {
     errors.push({
       field: "roleId",
-      message: "roleId must be a positive integer",
+      message: "Valid roleId is required",
     });
   }
 

@@ -1,43 +1,46 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../config/db.js";
+import mongoose from "mongoose";
 
-export const User = sequelize.define(
-  "User",
+const userSchema = new mongoose.Schema(
   {
     email: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: [true, "Email is required"],
       unique: true,
-      validate: {
-        isEmail: true,
-      },
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email"],
     },
     password: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: [true, "Password is required"],
+      select: false, // Don't include password by default
     },
     firstName: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: [true, "First name is required"],
+      trim: true,
     },
     lastName: {
-      type: DataTypes.STRING,
-      allowNull: false,
+      type: String,
+      required: [true, "Last name is required"],
+      trim: true,
     },
     isActive: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
+      type: Boolean,
+      default: true,
     },
-    roleId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
+    role: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Role",
+      required: true,
     },
     lastLogin: {
-      type: DataTypes.DATE,
-      allowNull: true,
+      type: Date,
     },
   },
   {
-    defaultScope: { attributes: { exclude: ["password"] } },
+    timestamps: true,
   }
 );
+
+export const User = mongoose.model("User", userSchema);

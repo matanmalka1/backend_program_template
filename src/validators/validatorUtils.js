@@ -18,14 +18,6 @@ export const isValidPassword = (value) => {
 export const isPositiveInteger = (value) =>
   Number.isInteger(value) && value > 0;
 
-export const isValidRoleId = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return false;
-  }
-  const numericValue = Number(value);
-  return Number.isInteger(numericValue) && numericValue > 0;
-};
-
 export const buildValidationError = (details) =>
   new ApiError(API_ERROR_CODES.VALIDATION_ERROR, "Validation failed", 400, {
     fields: details,

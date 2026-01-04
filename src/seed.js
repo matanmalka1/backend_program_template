@@ -2,8 +2,8 @@ import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
-import { sequelize } from "./config/db.js";
-import { User, Role, Permission } from "./models/associations.js";
+import { connectDB, disconnectDB } from "./config/db.js";
+import { User, Role, Permission } from "./models/index.js";
 
 const envFile =
   process.env.NODE_ENV && process.env.NODE_ENV !== "production"
@@ -23,20 +23,28 @@ if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
 }
 
 const seed = async () => {
-  await sequelize.authenticate();
-  await sequelize.sync();
+  await connectDB();
 
+  console.log("Starting database seed...");
+
+  // Create Roles
   const roleNames = ["admin", "manager", "editor", "support", "user"];
   const roleMap = {};
 
   for (const name of roleNames) {
-    const [role] = await Role.findOrCreate({
-      where: { name },
-      defaults: { description: `${name} role` },
-    });
+    let role = await Role.findOne({ name });
+    if (!role) {
+      role = await Role.create({
+        name,
+        description: `${name} role`,
+      });
+    }
     roleMap[name] = role;
   }
 
+  console.log("Roles created/updated");
+
+  // Create Permissions
   const permissions = [
     { name: "users.read", resource: "users", action: "read" },
     { name: "users.create", resource: "users", action: "create" },
@@ -50,52 +58,79 @@ const seed = async () => {
     { name: "auth.logout", resource: "auth", action: "logout" },
   ];
 
-  for (const permission of permissions) {
-    await Permission.findOrCreate({
-      where: { name: permission.name },
-      defaults: {
-        description: `${permission.name} permission`,
-        resource: permission.resource,
-        action: permission.action,
-      },
-    });
+  const permissionMap = {};
+
+  for (const perm of permissions) {
+    let permission = await Permission.findOne({ name: perm.name });
+    if (!permission) {
+      permission = await Permission.create({
+        name: perm.name,
+        description: `${perm.name} permission`,
+        resource: perm.resource,
+        action: perm.action,
+      });
+    }
+    permissionMap[perm.name] = permission;
   }
 
-  const permissionRecords = await Permission.findAll();
-  const permissionByName = new Map(
-    permissionRecords.map((permission) => [permission.name, permission])
-  );
+  console.log("Permissions created/updated");
 
-  const adminPermissions = permissionRecords;
-  const managerPermissions = [
+  // Assign permissions to roles
+  const allPermissions = Object.values(permissionMap).map((p) => p._id);
+
+  roleMap.admin.permissions = allPermissions;
+  await roleMap.admin.save();
+
+  roleMap.manager.permissions = [
     "users.read",
     "users.create",
     "users.update",
     "roles.read",
     "upload.create",
     "health.read",
-  ].map((name) => permissionByName.get(name));
-  const editorPermissions = ["users.read", "users.update", "upload.create"].map(
-    (name) => permissionByName.get(name)
-  );
-  const supportPermissions = ["users.read", "health.read"].map((name) =>
-    permissionByName.get(name)
-  );
-  const userPermissions = ["health.read", "auth.refresh", "auth.logout"].map(
-    (name) => permissionByName.get(name)
-  );
+  ].map((name) => permissionMap[name]._id);
+  await roleMap.manager.save();
 
-  await roleMap.admin.setPermissions(adminPermissions);
-  await roleMap.manager.setPermissions(managerPermissions);
-  await roleMap.editor.setPermissions(editorPermissions);
-  await roleMap.support.setPermissions(supportPermissions);
-  await roleMap.user.setPermissions(userPermissions);
+  roleMap.editor.permissions = [
+    "users.read",
+    "users.update",
+    "upload.create",
+  ].map((name) => permissionMap[name]._id);
+  await roleMap.editor.save();
 
+  roleMap.support.permissions = ["users.read", "health.read"].map(
+    (name) => permissionMap[name]._id
+  );
+  await roleMap.support.save();
+
+  roleMap.user.permissions = ["health.read", "auth.refresh", "auth.logout"].map(
+    (name) => permissionMap[name]._id
+  );
+  await roleMap.user.save();
+
+  console.log("Permissions assigned to roles");
+
+  // Create Users
   const usersToSeed = [
     { email: "admin@example.com", first: "Admin", last: "User", role: "admin" },
-    { email: "manager@example.com", first: "Manager", last: "User", role: "manager" },
-    { email: "editor@example.com", first: "Editor", last: "User", role: "editor" },
-    { email: "support@example.com", first: "Support", last: "User", role: "support" },
+    {
+      email: "manager@example.com",
+      first: "Manager",
+      last: "User",
+      role: "manager",
+    },
+    {
+      email: "editor@example.com",
+      first: "Editor",
+      last: "User",
+      role: "editor",
+    },
+    {
+      email: "support@example.com",
+      first: "Support",
+      last: "User",
+      role: "support",
+    },
     { email: "user1@example.com", first: "User", last: "One", role: "user" },
     { email: "user2@example.com", first: "User", last: "Two", role: "user" },
     { email: "user3@example.com", first: "User", last: "Three", role: "user" },
@@ -107,23 +142,27 @@ const seed = async () => {
   const hashedPassword = await bcrypt.hash("Password123!", 10);
 
   for (const user of usersToSeed) {
-    const existing = await User.findOne({ where: { email: user.email } });
-    if (existing) {
-      continue;
+    const existing = await User.findOne({ email: user.email });
+    if (!existing) {
+      await User.create({
+        email: user.email,
+        password: hashedPassword,
+        firstName: user.first,
+        lastName: user.last,
+        role: roleMap[user.role]._id,
+        isActive: true,
+      });
     }
-    await User.create({
-      email: user.email,
-      password: hashedPassword,
-      firstName: user.first,
-      lastName: user.last,
-      roleId: roleMap[user.role].id,
-      isActive: true,
-    });
   }
 
-  await sequelize.close();
+  console.log("Users created");
+  console.log("Database seeded successfully!");
+
+  await disconnectDB();
+  process.exit(0);
 };
 
-seed().catch(() => {
+seed().catch((error) => {
+  console.error("Error seeding database:", error);
   process.exit(1);
 });

@@ -1,28 +1,21 @@
-import { Sequelize } from "sequelize";
-import path from "path";
+import mongoose from "mongoose";
 
-export const sequelize = new Sequelize({
-  dialect: process.env.DB_DIALECT || "sqlite",
-  storage: process.env.DB_STORAGE
-    ? path.resolve(process.env.DB_STORAGE)
-    : path.resolve(process.cwd(), "database.sqlite"),
-  logging: false,
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000,
-  },
-  define: {
-    timestamps: true,
-    freezeTableName: true,
-  },
-});
-
-export const testConnection = async () => {
-  await sequelize.authenticate();
-  if (process.env.NODE_ENV !== "production") {
-    await sequelize.sync();
+export const connectDB = async () => {
+  try {
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    process.exit(1);
   }
-  return true;
+};
+
+export const disconnectDB = async () => {
+  try {
+    await mongoose.connection.close();
+    console.log("MongoDB Disconnected");
+  } catch (error) {
+    console.error(`Error disconnecting: ${error.message}`);
+  }
 };

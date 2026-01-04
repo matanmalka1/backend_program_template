@@ -5,6 +5,7 @@ package-lock.json
 # Environment variables
 .env.development
 .env.production
+.env
 
 # Logs
 logs/
@@ -14,6 +15,10 @@ npm-debug.log*
 # Uploads
 uploads/*
 !uploads/.gitkeep
+
+# Database
+database.sqlite
+*.db
 
 # IDE
 .vscode/

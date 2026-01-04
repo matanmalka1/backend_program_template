@@ -1,26 +1,38 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../config/db.js";
+import mongoose from "mongoose";
 
-export const RefreshToken = sequelize.define("RefreshToken", {
-  token: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
+const refreshTokenSchema = new mongoose.Schema(
+  {
+    token: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false,
+    },
+    revokedAt: {
+      type: Date,
+    },
   },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  expiresAt: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  isRevoked: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  revokedAt: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes
+refreshTokenSchema.index({ user: 1 });
+
+// Auto-delete expired tokens (TTL index)
+refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+export const RefreshToken = mongoose.model("RefreshToken", refreshTokenSchema);

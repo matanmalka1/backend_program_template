@@ -1,10 +1,10 @@
-import { User, Role, Permission } from "../models/associations.js";
+import { User, Role } from "../models/index.js";
 import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
 import { hashPassword } from "../utils/password.js";
 
 // CREATE
 export const createUser = async (userData) => {
-  const existingUser = await User.findOne({ where: { email: userData.email } });
+  const existingUser = await User.findOne({ email: userData.email });
 
   if (existingUser) {
     throw new ApiError(
@@ -14,7 +14,7 @@ export const createUser = async (userData) => {
     );
   }
 
-  const role = await Role.findByPk(userData.roleId);
+  const role = await Role.findById(userData.roleId);
 
   if (!role) {
     throw new ApiError(
@@ -29,38 +29,45 @@ export const createUser = async (userData) => {
     password: await hashPassword(userData.password),
     firstName: userData.firstName,
     lastName: userData.lastName,
-    roleId: userData.roleId,
+    role: userData.roleId,
   });
 
   return user;
 };
-// READ ALL
-export const getAllUsers = async (query) => {
-  const { count, rows } = await User.findAndCountAll({
-    include: [
-      {
-        model: Role,
-        as: "role",
-        attributes: ["id", "name"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
 
-  return { count, users: rows };
+// READ ALL (with pagination)
+export const getAllUsers = async (query) => {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 10));
+  const skip = (page - 1) * limit;
+
+  const [users, count] = await Promise.all([
+    User.find()
+      .populate("role", "name")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(),
+  ]);
+
+  return {
+    count,
+    users,
+    page,
+    limit,
+    totalPages: Math.ceil(count / limit),
+  };
 };
 
-// READ
+// READ ONE
 export const getUserById = async (id) => {
-  const user = await User.findByPk(id, {
-    include: [
-      {
-        model: Role,
-        as: "role",
-        include: [{ model: Permission, as: "permissions" }],
-      },
-    ],
-  });
+  const user = await User.findById(id)
+    .populate({
+      path: "role",
+      populate: { path: "permissions" },
+    })
+    .lean();
 
   if (!user) {
     throw new ApiError(
@@ -75,7 +82,7 @@ export const getUserById = async (id) => {
 
 // UPDATE
 export const updateUser = async (id, userData) => {
-  const user = await User.findByPk(id);
+  const user = await User.findById(id);
 
   if (!user) {
     throw new ApiError(
@@ -86,9 +93,7 @@ export const updateUser = async (id, userData) => {
   }
 
   if (userData.email && userData.email !== user.email) {
-    const existingUser = await User.findOne({
-      where: { email: userData.email },
-    });
+    const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
       throw new ApiError(
         API_ERROR_CODES.DUPLICATE_RESOURCE,
@@ -99,7 +104,7 @@ export const updateUser = async (id, userData) => {
   }
 
   if (userData.roleId) {
-    const role = await Role.findByPk(userData.roleId);
+    const role = await Role.findById(userData.roleId);
     if (!role) {
       throw new ApiError(
         API_ERROR_CODES.RESOURCE_NOT_FOUND,
@@ -107,22 +112,19 @@ export const updateUser = async (id, userData) => {
         404
       );
     }
+    userData.role = userData.roleId;
+    delete userData.roleId;
   }
 
-  await user.update({
-    ...(userData.email && { email: userData.email }),
-    ...(userData.firstName && { firstName: userData.firstName }),
-    ...(userData.lastName && { lastName: userData.lastName }),
-    ...(userData.isActive !== undefined && { isActive: userData.isActive }),
-    ...(userData.roleId && { roleId: userData.roleId }),
-  });
+  Object.assign(user, userData);
+  await user.save();
 
   return user;
 };
 
 // DELETE
 export const deleteUser = async (id) => {
-  const user = await User.findByPk(id);
+  const user = await User.findById(id);
 
   if (!user) {
     throw new ApiError(
@@ -132,5 +134,5 @@ export const deleteUser = async (id) => {
     );
   }
 
-  await user.destroy();
+  await user.deleteOne();
 };

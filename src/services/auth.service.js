@@ -1,10 +1,5 @@
 import { comparePassword, hashPassword } from "../utils/password.js";
-import {
-  User,
-  Role,
-  Permission,
-  RefreshToken,
-} from "../models/associations.js";
+import { User, Role, RefreshToken } from "../models/index.js";
 import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
 import {
   generateAccessToken,
@@ -13,7 +8,7 @@ import {
 } from "../utils/jwt.js";
 
 export const register = async (userData) => {
-  const existingUser = await User.findOne({ where: { email: userData.email } });
+  const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
     throw new ApiError(
       API_ERROR_CODES.DUPLICATE_RESOURCE,
@@ -22,7 +17,7 @@ export const register = async (userData) => {
     );
   }
 
-  const defaultRole = await Role.findOne({ where: { name: "user" } });
+  const defaultRole = await Role.findOne({ name: "user" });
   if (!defaultRole) {
     throw new ApiError(
       API_ERROR_CODES.SERVER_ERROR,
@@ -36,24 +31,23 @@ export const register = async (userData) => {
     password: await hashPassword(userData.password),
     firstName: userData.firstName,
     lastName: userData.lastName,
-    roleId: defaultRole.id,
+    role: defaultRole._id,
   });
 
-  return { user };
+  // Remove password from response
+  const userObject = user.toObject();
+  delete userObject.password;
+
+  return { user: userObject };
 };
 
 export const login = async (email, password) => {
-  const user = await User.findOne({
-    where: { email },
-    attributes: { include: ["password"] },
-    include: [
-      {
-        model: Role,
-        as: "role",
-        include: [{ model: Permission, as: "permissions" }],
-      },
-    ],
-  });
+  const user = await User.findOne({ email })
+    .select("+password")
+    .populate({
+      path: "role",
+      populate: { path: "permissions" },
+    });
 
   if (!user || !user.isActive) {
     throw new ApiError(
@@ -71,37 +65,45 @@ export const login = async (email, password) => {
       401
     );
   }
-  const accessToken = generateAccessToken({ userId: user.id });
-  const refreshToken = generateRefreshToken({ userId: user.id });
+
+  const accessToken = generateAccessToken({ userId: user._id.toString() });
+  const refreshToken = generateRefreshToken({ userId: user._id.toString() });
+
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   await RefreshToken.create({
     token: refreshToken,
-    userId: user.id,
+    user: user._id,
     expiresAt,
   });
-  await user.update({ lastLogin: new Date() });
 
-  return { user, accessToken, refreshToken };
+  await user.updateOne({ lastLogin: new Date() });
+
+  // Remove password from response
+  const userObject = user.toObject();
+  delete userObject.password;
+
+  return { user: userObject, accessToken, refreshToken };
 };
 
 export const logout = async (userId, refreshToken) => {
   if (refreshToken) {
-    await RefreshToken.update(
-      { isRevoked: true, revokedAt: new Date() },
-      { where: { token: refreshToken, userId } }
+    await RefreshToken.updateOne(
+      { token: refreshToken, user: userId },
+      { isRevoked: true, revokedAt: new Date() }
     );
   }
 };
+
 export const refreshAccessToken = async (oldRefreshToken) => {
   const decoded = verifyRefreshToken(oldRefreshToken);
+
   const tokenRecord = await RefreshToken.findOne({
-    where: {
-      token: oldRefreshToken,
-      userId: decoded.userId,
-    },
+    token: oldRefreshToken,
+    user: decoded.userId,
   });
+
   if (!tokenRecord || tokenRecord.isRevoked) {
     throw new ApiError(
       API_ERROR_CODES.REFRESH_TOKEN_INVALID,
@@ -109,6 +111,7 @@ export const refreshAccessToken = async (oldRefreshToken) => {
       401
     );
   }
+
   if (new Date() > tokenRecord.expiresAt) {
     throw new ApiError(
       API_ERROR_CODES.REFRESH_TOKEN_EXPIRED,
@@ -116,7 +119,8 @@ export const refreshAccessToken = async (oldRefreshToken) => {
       401
     );
   }
-  const user = await User.findByPk(decoded.userId);
+
+  const user = await User.findById(decoded.userId);
   if (!user || !user.isActive) {
     throw new ApiError(
       API_ERROR_CODES.AUTHENTICATION_ERROR,
@@ -124,16 +128,18 @@ export const refreshAccessToken = async (oldRefreshToken) => {
       401
     );
   }
-  await tokenRecord.update({ isRevoked: true, revokedAt: new Date() });
-  const newAccessToken = generateAccessToken({ userId: user.id });
-  const newRefreshToken = generateRefreshToken({ userId: user.id });
-  const expiresAt = new Date();
 
+  await tokenRecord.updateOne({ isRevoked: true, revokedAt: new Date() });
+
+  const newAccessToken = generateAccessToken({ userId: user._id.toString() });
+  const newRefreshToken = generateRefreshToken({ userId: user._id.toString() });
+
+  const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
   await RefreshToken.create({
     token: newRefreshToken,
-    userId: user.id,
+    user: user._id,
     expiresAt,
   });
 

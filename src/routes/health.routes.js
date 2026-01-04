@@ -1,19 +1,21 @@
 import express from "express";
-import { sequelize } from "../config/db.js";
+import mongoose from "mongoose";
 import { successResponse } from "../utils/response.js";
 
 export const router = express.Router();
-// HEALTH CHECK
+
 router.get("/health", async (_req, res, next) => {
   try {
-    await sequelize.authenticate();
+    // Check MongoDB connection
+    const dbStatus =
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected";
 
     const healthData = {
       status: "healthy",
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
-      database: "connected",
+      database: dbStatus,
     };
 
     successResponse(res, healthData, "Server is healthy");

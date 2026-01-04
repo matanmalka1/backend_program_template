@@ -1,14 +1,28 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../config/db.js";
+import mongoose from "mongoose";
 
-export const Role = sequelize.define("Role", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
+const roleSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    permissions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Permission",
+      },
+    ],
   },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+export const Role = mongoose.model("Role", roleSchema);

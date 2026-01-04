@@ -1,25 +1,34 @@
-import { DataTypes, Model } from "sequelize";
-import { sequelize } from "../config/db.js";
+import mongoose from "mongoose";
 
-export const Permission = sequelize.define("Permission", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-    validate: { notEmpty: true },
+const permissionSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+    resource: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    action: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
-  description: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  resource: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: { notEmpty: true },
-  },
-  action: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    validate: { notEmpty: true },
-  },
-});
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes
+permissionSchema.index({ resource: 1, action: 1 });
+
+export const Permission = mongoose.model("Permission", permissionSchema);
