@@ -6,9 +6,9 @@ import { connectDB, disconnectDB } from "./config/db.js";
 import { User, Role, Permission } from "./models/index.js";
 
 const envFile =
-  process.env.NODE_ENV && process.env.NODE_ENV !== "production"
-    ? `.env.${process.env.NODE_ENV}`
-    : ".env";
+  process.env.NODE_ENV === "production"
+    ? ".env"
+    : `.env.${process.env.NODE_ENV || "development"}`;
 
 const cwd = process.cwd();
 const preferredDevEnv = path.join(cwd, ".env.development");
