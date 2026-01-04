@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { app } from "./app.js";
 import { connectDB } from "./config/db.js";
+import { logger } from "./utils/logger.js";
 
 const envFile =
   process.env.NODE_ENV && process.env.NODE_ENV !== "production"
@@ -21,15 +22,32 @@ if (!process.env.NODE_ENV && fs.existsSync(preferredDevEnv)) {
 }
 
 const startServer = async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  const port = +process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server is live, Listening on port: ${port}`);
-  });
+    const port = +process.env.PORT || 3000;
+    app.listen(port, () => {
+      logger.info(`Server is live" ,Listening on port: ${port}`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server', { error: error.message });
+    process.exit(1);
+  }
 };
 
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception', { error: error.message, stack: error.stack });
+  process.exit(1);
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection', { reason, promise });
+  process.exit(1);
+});
+
 startServer().catch((error) => {
-  console.error("Failed to start server:", error);
+  logger.error("Failed to start server", { error: error.message });
   process.exit(1);
 });

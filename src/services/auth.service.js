@@ -1,4 +1,5 @@
 import { comparePassword, hashPassword } from "../utils/password.js";
+import { logger } from "../utils/logger.js";
 import { User, Role, RefreshToken } from "../models/index.js";
 import { ApiError, API_ERROR_CODES } from "../constants/api-error-codes.js";
 import {
@@ -10,6 +11,9 @@ import {
 export const register = async (userData) => {
   const existingUser = await User.findOne({ email: userData.email });
   if (existingUser) {
+    logger.warn("Registration failed - duplicate email", {
+      email: userData.email,
+    });
     throw new ApiError(
       API_ERROR_CODES.DUPLICATE_RESOURCE,
       "User with this email already exists",
@@ -38,6 +42,11 @@ export const register = async (userData) => {
   const userObject = user.toObject();
   delete userObject.password;
 
+  logger.info("User registered successfully", {
+    userId: user._id,
+    email: user.email,
+  });
+
   return { user: userObject };
 };
 
@@ -50,6 +59,7 @@ export const login = async (email, password) => {
     });
 
   if (!user || !user.isActive) {
+    logger.warn("Login failed - invalid credentials", { email });
     throw new ApiError(
       API_ERROR_CODES.INVALID_CREDENTIALS,
       "Invalid credentials",
@@ -59,6 +69,7 @@ export const login = async (email, password) => {
 
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
+    logger.warn("Login failed - invalid password", { email });
     throw new ApiError(
       API_ERROR_CODES.INVALID_CREDENTIALS,
       "Invalid credentials",
@@ -84,6 +95,11 @@ export const login = async (email, password) => {
   const userObject = user.toObject();
   delete userObject.password;
 
+  logger.info("User logged in successfully", {
+    userId: user._id,
+    email: user.email,
+  });
+
   return { user: userObject, accessToken, refreshToken };
 };
 
@@ -93,6 +109,7 @@ export const logout = async (userId, refreshToken) => {
       { token: refreshToken, user: userId },
       { isRevoked: true, revokedAt: new Date() }
     );
+    logger.info("User logged out", { userId });
   }
 };
 

@@ -1,5 +1,6 @@
 import { ApiError, API_ERROR_CODES } from '../constants/api-error-codes.js';
 import { errorResponse } from '../utils/response.js';
+import { logger } from '../utils/logger.js';
 
 export const errorHandler = (err, req, res, _next) => {
   let error = err;
@@ -16,6 +17,24 @@ export const errorHandler = (err, req, res, _next) => {
   }
 
   const { code, message, statusCode, details } = error;
+
+  // Log the error
+  const logMessage = {
+    code,
+    message,
+    statusCode,
+    method: req.method,
+    path: req.path,
+    ip: req.ip,
+    userAgent: req.get('user-agent'),
+    userId: req.user?._id || req.user?.id,
+  };
+
+  if (statusCode >= 500) {
+    logger.error('Server Error', { ...logMessage, stack: err.stack });
+  } else if (statusCode >= 400) {
+    logger.warn('Client Error', logMessage);
+  }
 
   if (process.env.NODE_ENV === 'production') {
     delete error.stack;
