@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 
 import { ApiError, API_ERROR_CODES } from '../constants/api-error-codes.js';
@@ -11,7 +12,13 @@ export const generateAccessToken = (payload) => {
 
 // Sign a long-lived refresh token.
 export const generateRefreshToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+  const tokenPayload = {
+    ...payload,
+    // Ensure refresh tokens are unique even when issued in the same second.
+    jti: crypto.randomUUID(),
+  };
+
+  return jwt.sign(tokenPayload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
   });
 };
